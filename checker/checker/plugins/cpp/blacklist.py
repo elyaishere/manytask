@@ -23,9 +23,11 @@ def prepare_nix_compile_database(build_dir: Path) -> None:
     ]
     compiler = shutil.which(os.environ.get("CXX", "clang++"))
     if compiler is not None:
-        wrapper_flags = Path(compiler).resolve().parent.parent / "nix-support" / "cc-cflags"
-        if wrapper_flags.exists():
-            flags.extend(shlex.split(wrapper_flags.read_text()))
+        nix_support = Path(compiler).parent.parent / "nix-support"
+        for name in ("cc-cflags", "libc-cflags", "libcxx-cxxflags"):
+            wrapper_flags = nix_support / name
+            if wrapper_flags.exists():
+                flags.extend(shlex.split(wrapper_flags.read_text()))
 
     compile_database = build_dir / "compile_commands.json"
     if not flags or not compile_database.exists():
