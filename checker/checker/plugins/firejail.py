@@ -108,8 +108,12 @@ class SafeRunScriptPlugin(PluginABC):
         for path in args.paths_blacklist:
             command.append(f"--blacklist={self._expand_path(path)}")
 
-        # Hide all environment variables except allowed
-        command += ["env", "-i"]
+        # Hide all environment variables except allowed. Use an absolute path because
+        # the sandbox intentionally starts without PATH.
+        env_executable = shutil.which("env")
+        if env_executable is None:
+            raise PluginExecutionFailed("env executable was not found")
+        command += [env_executable, "-i"]
         env: dict[str, str] = {e: os.environ.get(e, "") for e in args.env_whitelist}
         env.update(args.env_additional)
         for e, v in env.items():
