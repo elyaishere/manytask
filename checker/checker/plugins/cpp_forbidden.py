@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from checker.exceptions import PluginExecutionFailed
-from checker.plugins.cpp.blacklist import get_cpp_blacklist, nix_compile_database_response_file, nix_toolchain_env
+from checker.plugins.cpp.blacklist import get_cpp_blacklist, prepare_nix_compile_database, nix_toolchain_env
 from checker.plugins.firejail import SafeRunScriptPlugin
 from checker.utils import print_info
 
@@ -41,11 +41,11 @@ class CppForbiddenPlugin(PluginABC):
         if not checker_args:
             raise PluginExecutionFailed("No arguments for the checker")
 
-        response_file = nix_compile_database_response_file(args.reference_root / args.build_dir)
+        prepare_nix_compile_database(args.reference_root / args.build_dir)
 
         run_args = SafeRunScriptPlugin.Args(
             origin=str(args.reference_root / args.build_dir),
-            script=[args.forbidden_checker, "-p", ".", *([response_file] if response_file else []), *checker_args],
+            script=[args.forbidden_checker, "-p", ".", *checker_args],
             env_whitelist=nix_toolchain_env(),
             paths_whitelist=[str(args.reference_root)],
             paths_blacklist=get_cpp_blacklist(args.reference_root),

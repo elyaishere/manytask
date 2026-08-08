@@ -1,3 +1,4 @@
+import json
 import os
 import shlex
 from pathlib import Path
@@ -12,19 +13,24 @@ def get_cpp_blacklist(root: Path) -> list[str]:
         result.append("*/" + result[-1])
     return [str(root / p) for p in result]
 
-def nix_compile_database_response_file(build_dir: Path) -> str | None:
+def prepare_nix_compile_database(build_dir: Path) -> None:
     flags = [
-        f"--extra-arg={arg}"
+        arg
         for name, value in os.environ.items()
         if name.startswith("NIX_CFLAGS_COMPILE")
         for arg in shlex.split(value)
     ]
-    if not flags:
-        return None
+    compile_database = build_dir / "compile_commands.json"
+    if not flags or not compile_database.exists():
+        return
 
-    response_file = build_dir / ".checker-nix-cflags.rsp"
-    response_file.write_text("\n".join(map(shlex.quote, flags)) + "\n")
-    return "@" + str(response_file)
+    commands = json.loads(compile_database.read_text())
+    for command in commands:
+        if "arguments" in command:
+            command["arguments"].extend(flags)
+        elif "command" in command:
+            command["command"] += " " + shlex.join(flags)
+    compile_database.write_text(json.dumps(commands, indent=2) + "\n")
 
 def nix_toolchain_env() -> list[str]:
     return [name for name in os.environ if name == "PATH" or name.startswith("NIX_")]
