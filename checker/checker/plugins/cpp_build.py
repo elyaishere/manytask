@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from checker.exceptions import PluginExecutionFailed
-from checker.plugins.cpp.blacklist import get_cpp_blacklist
+from checker.plugins.cpp.blacklist import get_cpp_blacklist, nix_toolchain_env
 from checker.plugins.firejail import SafeRunScriptPlugin
 from checker.utils import print_info
 
@@ -38,7 +38,7 @@ class CppBuildPlugin(PluginABC):
             run_args = SafeRunScriptPlugin.Args(
                 origin=str(build_dir),
                 script=["ninja", "-v", target],
-                env_whitelist=["PATH"],
+                env_whitelist=nix_toolchain_env(),
                 env_additional={"CLICOLOR_FORCE": "1"},
                 paths_whitelist=[str(args.root)],
                 paths_blacklist=get_cpp_blacklist(args.root),

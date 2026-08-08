@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from checker.exceptions import PluginExecutionFailed
-from checker.plugins.cpp.blacklist import get_cpp_blacklist
+from checker.plugins.cpp.blacklist import get_cpp_blacklist, nix_toolchain_env
 from checker.plugins.firejail import SafeRunScriptPlugin
 from checker.utils import print_info
 
@@ -39,6 +39,7 @@ class CppClangFormatPlugin(PluginABC):
                 "-r",
                 *lint_files,
             ],
+            env_whitelist=nix_toolchain_env(),
             paths_blacklist=get_cpp_blacklist(args.reference_root),
         )
         output = SafeRunScriptPlugin()._run(run_args, verbose=verbose).output

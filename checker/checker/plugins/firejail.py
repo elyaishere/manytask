@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from pathlib import Path
 from typing import Optional, Union
 
@@ -42,7 +43,10 @@ class SafeRunScriptPlugin(PluginABC):
         """
         import subprocess
 
-        result = subprocess.run(["firejail", "--version"], capture_output=True)
+        firejail = shutil.which("firejail")
+        if firejail is None:
+            return False, "firejail executable was not found"
+        result = subprocess.run([firejail, "--version"], capture_output=True, env={})
         return result.returncode == 0, result.stderr.decode("utf-8")
 
     def _fallback_to_run_script(self, args: Args, verbose: bool) -> PluginOutput:
@@ -138,7 +142,7 @@ class SafeRunScriptPlugin(PluginABC):
             script=command,
             timeout=args.timeout,
             env_additional={},
-            env_whitelist=None,
+            env_whitelist=args.env_whitelist,
             input=args.input,
         )
         return RunScriptPlugin()._run(args=run_args, verbose=verbose)
