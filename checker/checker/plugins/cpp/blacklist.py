@@ -1,6 +1,7 @@
 import json
 import os
 import shlex
+import shutil
 from pathlib import Path
 
 
@@ -20,6 +21,12 @@ def prepare_nix_compile_database(build_dir: Path) -> None:
         if name.startswith("NIX_CFLAGS_COMPILE")
         for arg in shlex.split(value)
     ]
+    compiler = shutil.which(os.environ.get("CXX", "clang++"))
+    if compiler is not None:
+        wrapper_flags = Path(compiler).resolve().parent.parent / "nix-support" / "cc-cflags"
+        if wrapper_flags.exists():
+            flags.extend(shlex.split(wrapper_flags.read_text()))
+
     compile_database = build_dir / "compile_commands.json"
     if not flags or not compile_database.exists():
         return
