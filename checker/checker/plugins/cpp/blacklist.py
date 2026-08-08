@@ -1,5 +1,4 @@
 import os
-import shlex
 from pathlib import Path
 
 
@@ -14,7 +13,3 @@ def get_cpp_blacklist(root: Path) -> list[str]:
 
 def nix_toolchain_env() -> list[str]:
     return [name for name in os.environ if name == "PATH" or name.startswith("NIX_")]
-
-def nix_compile_database_args() -> list[str]:
-    flags = " ".join(value for name, value in os.environ.items() if name.startswith("NIX_CFLAGS_COMPILE"))
-    return [f"--extra-arg={arg}" for arg in shlex.split(flags)]
